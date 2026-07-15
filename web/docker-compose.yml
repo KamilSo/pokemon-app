@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pokemon_app_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pokemon_user
+      POSTGRES_PASSWORD: pokemon_password
+      POSTGRES_DB: pokemon_app
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pokemon_user -d pokemon_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

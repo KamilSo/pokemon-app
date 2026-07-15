@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  name            String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  collectionItems CollectionItem[]
+}
+
+model Card {
+  id                  String          @id @default(cuid())
+  pokemonTcgId        String?         @unique
+  name                String
+  supertype           String?
+  subtypes            String[]        @default([])
+  types               String[]        @default([])
+  setId               String?
+  setName             String?
+  setSeries           String?
+  number              String?
+  rarity              String?
+  artist              String?
+  imageSmall          String?
+  imageLarge          String?
+  pokemonTcgUpdatedAt String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  collectionItems     CollectionItem[]
+  priceSnapshots      PriceSnapshot[]
+
+  @@index([name])
+  @@index([setName])
+}
+
+model CollectionItem {
+  id             String        @id @default(cuid())
+  userId         String
+  cardId         String
+  quantity       Int           @default(1)
+  condition      CardCondition @default(NEAR_MINT)
+  isGraded       Boolean       @default(false)
+  gradingCompany String?
+  grade          Decimal?      @db.Decimal(3, 1)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card           Card          @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([cardId])
+}
+
+model PriceSnapshot {
+  id         String      @id @default(cuid())
+  cardId     String
+  source     PriceSource
+  region     String      @default("UK")
+  currency   String      @default("GBP")
+  price      Decimal     @db.Decimal(10, 2)
+  capturedAt DateTime    @default(now())
+
+  card       Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId, capturedAt])
+  @@index([source, region, currency])
+}
+
+enum CardCondition {
+  NEAR_MINT
+  LIGHTLY_PLAYED
+  MODERATELY_PLAYED
+  HEAVILY_PLAYED
+  DAMAGED
+}
+
+enum PriceSource {
+  EBAY
+  TCGPLAYER
+  CARDMARKET
+  MANUAL
+}
